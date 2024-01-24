@@ -1,5 +1,7 @@
 package medspress.VehicleSimulationApp.contoller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -42,5 +44,20 @@ public class PublishMessage {
         kafkaTemplate.send(topic, message);
         return new ResponseEntity<>("Coordinates published", HttpStatus.OK);
     }
+
+    @PostMapping(value = "/delivery", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> makeDelivery(@RequestBody List<Coordinates> coordinatesList) {
+        try {
+            for (Coordinates coordinates : coordinatesList) {
+                String message = String.format("{\"latitude\": %f, \"longitude\": %f}", coordinates.getLatitude(), coordinates.getLongitude());
+                kafkaTemplate.send(topic, message);
+            }
+            return new ResponseEntity<>("Coordinates published", HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Error publishing coordinates", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
 }
