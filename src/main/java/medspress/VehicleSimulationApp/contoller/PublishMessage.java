@@ -15,11 +15,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import medspress.VehicleSimulationApp.model.Coordinates;
+import medspress.VehicleSimulationApp.service.VehicleSimulationService;
 
 @RestController
 public class PublishMessage {
+    
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Autowired
+    private VehicleSimulationService vehicleSimulationService;
 
     @Value(value = "${spring.kafka.topic}")
     private String topic;
@@ -46,12 +51,21 @@ public class PublishMessage {
     }
 
     @PostMapping(value = "/delivery", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> makeDelivery(@RequestBody List<Coordinates> coordinatesList) {
+    public ResponseEntity<String> makeDelivery(@RequestBody List<Coordinates> deliveryRequest) {
         try {
+            Coordinates start = deliveryRequest.get(0);
+            Coordinates end = deliveryRequest.get(deliveryRequest.size() - 1);
+
+            List<Coordinates> coordinatesList = vehicleSimulationService.simulateVehicleMovement(start, end);
+
             for (Coordinates coordinates : coordinatesList) {
                 String message = String.format("{\"latitude\": %f, \"longitude\": %f}", coordinates.getLatitude(), coordinates.getLongitude());
                 kafkaTemplate.send(topic, message);
+
+                // Introduce a 30-second sleep between sending each set of coordinates
+                Thread.sleep(30000);
             }
+
             return new ResponseEntity<>("Coordinates published", HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
