@@ -15,7 +15,7 @@ public class VehicleSimulationService {
         List<Coordinates> coordinatesList = new ArrayList<>();
 
         double totalDistance = calculateDistance(start, end);
-        double distanceStep = 0.00001;
+        double distanceStep = 0.05;
     
         double currentDistance = 0;
     
@@ -25,6 +25,9 @@ public class VehicleSimulationService {
             double longitude = start.getLongitude() + (ratio * (end.getLongitude() - start.getLongitude()));
             coordinatesList.add(new Coordinates(latitude, longitude));
             currentDistance += distanceStep;
+        }
+        if(currentDistance > totalDistance){
+            coordinatesList.add(end);
         }
     
         return coordinatesList;

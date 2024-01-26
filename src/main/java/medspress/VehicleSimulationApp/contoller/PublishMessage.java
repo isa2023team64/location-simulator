@@ -59,7 +59,8 @@ public class PublishMessage {
             List<Coordinates> coordinatesList = vehicleSimulationService.simulateVehicleMovement(start, end);
 
             for (Coordinates coordinates : coordinatesList) {
-                String message = String.format("{\"latitude\": %f, \"longitude\": %f}", coordinates.getLatitude(), coordinates.getLongitude());
+                String message = String.format("[{\"latitude\": %s, \"longitude\": %s}]",
+                String.valueOf(coordinates.getLatitude()), String.valueOf(coordinates.getLongitude()));
                 kafkaTemplate.send(topic, message);
 
                 // Introduce a 30-second sleep between sending each set of coordinates
