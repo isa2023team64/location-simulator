@@ -23,7 +23,7 @@ public class VehicleSimulationService {
             double ratio = currentDistance / totalDistance;
             double latitude = start.getLatitude() + (ratio * (end.getLatitude() - start.getLatitude()));
             double longitude = start.getLongitude() + (ratio * (end.getLongitude() - start.getLongitude()));
-            coordinatesList.add(new Coordinates(latitude, longitude));
+            coordinatesList.add(new Coordinates(latitude, longitude, start.getDeliveryId()));
             currentDistance += distanceStep;
         }
         if(currentDistance > totalDistance){

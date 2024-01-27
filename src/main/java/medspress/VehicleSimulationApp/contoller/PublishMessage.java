@@ -64,7 +64,7 @@ public class PublishMessage {
                 kafkaTemplate.send(topic, message);
 
                 // Introduce a 30-second sleep between sending each set of coordinates
-                Thread.sleep(30000);
+                Thread.sleep(5000);
             }
 
             return new ResponseEntity<>("Coordinates published", HttpStatus.OK);
