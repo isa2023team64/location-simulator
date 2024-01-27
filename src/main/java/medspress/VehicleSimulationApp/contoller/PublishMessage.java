@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import medspress.VehicleSimulationApp.config.SimulationConfig;
 import medspress.VehicleSimulationApp.model.Coordinates;
 import medspress.VehicleSimulationApp.service.VehicleSimulationService;
 
@@ -25,6 +26,9 @@ public class PublishMessage {
 
     @Autowired
     private VehicleSimulationService vehicleSimulationService;
+    
+    @Autowired
+    private SimulationConfig simulationConfig;
 
     @Value(value = "${spring.kafka.topic}")
     private String topic;
@@ -56,7 +60,8 @@ public class PublishMessage {
             Coordinates start = deliveryRequest.get(0);
             Coordinates end = deliveryRequest.get(deliveryRequest.size() - 1);
 
-            List<Coordinates> coordinatesList = vehicleSimulationService.simulateVehicleMovement(start, end);
+            // List<Coordinates> coordinatesList = vehicleSimulationService.simulateVehicleMovement(start, end);
+            List<Coordinates> coordinatesList = deliveryRequest;
 
             for (Coordinates coordinates : coordinatesList) {
                 String message = String.format("[{\"latitude\": %s, \"longitude\": %s}]",
@@ -64,7 +69,7 @@ public class PublishMessage {
                 kafkaTemplate.send(topic, message);
 
                 // Introduce a 30-second sleep between sending each set of coordinates
-                Thread.sleep(5000);
+                Thread.sleep(simulationConfig.getThreadSleepTime() * 1000);
             }
 
             return new ResponseEntity<>("Coordinates published", HttpStatus.OK);
