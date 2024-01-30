@@ -1,5 +1,7 @@
 package medspress.VehicleSimulationApp.contoller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -12,12 +14,21 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import medspress.VehicleSimulationApp.config.SimulationConfig;
 import medspress.VehicleSimulationApp.model.Coordinates;
+import medspress.VehicleSimulationApp.service.VehicleSimulationService;
 
 @RestController
 public class PublishMessage {
+    
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Autowired
+    private VehicleSimulationService vehicleSimulationService;
+    
+    @Autowired
+    private SimulationConfig simulationConfig;
 
     @Value(value = "${spring.kafka.topic}")
     private String topic;
@@ -42,5 +53,31 @@ public class PublishMessage {
         kafkaTemplate.send(topic, message);
         return new ResponseEntity<>("Coordinates published", HttpStatus.OK);
     }
+
+    @PostMapping(value = "/delivery", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> makeDelivery(@RequestBody List<Coordinates> deliveryRequest) {
+        try {
+            Coordinates start = deliveryRequest.get(0);
+            Coordinates end = deliveryRequest.get(deliveryRequest.size() - 1);
+
+            // List<Coordinates> coordinatesList = vehicleSimulationService.simulateVehicleMovement(start, end);
+            List<Coordinates> coordinatesList = deliveryRequest;
+
+            for (Coordinates coordinates : coordinatesList) {
+                String message = String.format("[{\"latitude\": %s, \"longitude\": %s}]",
+                String.valueOf(coordinates.getLatitude()), String.valueOf(coordinates.getLongitude()));
+                kafkaTemplate.send(topic, message);
+
+                // Introduce a 30-second sleep between sending each set of coordinates
+                Thread.sleep(simulationConfig.getThreadSleepTime() * 1000);
+            }
+
+            return new ResponseEntity<>("Coordinates published", HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Error publishing coordinates", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
 }
